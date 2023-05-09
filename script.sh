@@ -19,7 +19,21 @@ NUMBER_OF_SHIPS_1=0
 
 declare -A BOARD
 
-initializeBoard() {
+declare -A AI_BOARD
+
+declare -A SHOOTING_BOARD
+
+#intialize ai board
+function initializeAiBoard() {
+        for (( i=0; i<10; i++ )); do
+                for (( j=0; j<10; j++ )); do
+                        AI_BOARD[$i,$j]=${EMPTY_FIELD}
+                done
+        done
+}
+
+#intialize players board
+function initializeBoard() {
         for((i=0; i<10; i++))
         do
                 for((j=0; j<10; j++))
@@ -30,12 +44,25 @@ initializeBoard() {
         BOARD[$COORDINATES_Y,$COORDINATES_X]=${SELECT_SHIP}
 }
 
-printBoard() {
+#intialize shooting board
+function initializeShootingBoard() {
+        for((i=0; i<10; i++))
+        do
+                for((j=0; j<10; j++))
+                do
+                        SHOOTING_BOARD[$i,$j]=${EMPTY_FIELD}
+                done
+        done
+        SHOOTING_BOARD[0,0]=${SELECT_SHIP}
+}
+
+#simply print the board made by player
+function printBoard() {
         echo "| CUROSR MOVEMENT -> W A S D | PLACE SHIP -> F | QUIT E | "
-        echo -e "\033[0;36m    A   B   C   D   E   F   G   H   I   J \033[0m"  # cyan header row
+        echo -e "\033[0;36m    A   B   C   D   E   F   G   H   I   J \033[0m"  # cyan header ROW
         for((i=0; i<10; i++))
         do      
-                echo -n -e "\033[0;33m$COUNTER   \033[0m"  # yellow row number
+                echo -n -e "\033[0;33m$COUNTER   \033[0m"  # yellow ROW number
                 for((j=0; j<10; j++))
                 do
                         if [[ ${BOARD[$i,$j]} == ${EMPTY_FIELD} ]]; 
@@ -56,14 +83,43 @@ printBoard() {
         COUNTER=0
 }
 
-cursor() {
+#simply print shooting board
+function printShootingBoard() {
+        echo "| CUROSR MOVEMENT -> W A S D | SHOOT SHIP -> F | QUIT E | "
+        echo -e "\033[0;36m    A   B   C   D   E   F   G   H   I   J \033[0m"  # cyan header ROW
+        for((i=0; i<10; i++))
+        do      
+                echo -n -e "\033[0;33m$COUNTER   \033[0m"  # yellow ROW number
+                for((j=0; j<10; j++))
+                do
+                        if [[ ${SHOOTING_BOARD[$i,$j]} == ${EMPTY_FIELD} ]]; 
+                        then
+                                echo -ne "\033[0;0m${SHOOTING_BOARD[$i,$j]}   \033[0m" # default white
+
+                        elif [[ ${SHOOTING_BOARD[$i,$j]} == ${SELECT_SHIP} ]]; 
+                        then
+                                echo -ne "\033[0;31m${SHOOTING_BOARD[$i,$j]}\033[0m   " # red
+                        else
+                                echo -ne "\033[0;32m${SHOOTING_BOARD[$i,$j]}   \033[0m" # green
+
+                        fi
+                done
+                echo
+                COUNTER=$(($COUNTER+1))
+        done
+        COUNTER=0
+}
+
+#cursor movement
+function cursor() {
         clear
         BOARD[$PREVIOUS_Y,$PREVIOUS_X]=${EMPTY_FIELD}
         BOARD[$COORDINATES_Y,$COORDINATES_X]=${SELECT_SHIP}
         printBoard
 }
 
-findPositionOfCursor() {
+#find the position of cursor after action 
+function findPositionOfCursor() {
         #BOARD[$COORDINATES_Y,$COORDINATES_X]=${SHIP}   #finding empty field for cursor
         if [[ ${COORDINATES_Y} -gt 0 && ${BOARD[$(($COORDINATES_Y-1)),$COORDINATES_X]} == ${EMPTY_FIELD} ]]; then
                 COORDINATES_Y=$(($COORDINATES_Y-1))                                                                                     
@@ -83,7 +139,8 @@ findPositionOfCursor() {
         printBoard     
 }
 
-placeShips() {
+#place the ships
+function placeShips() {
         read -rsn2 -t 0.1 # consume any remaining input
 
         echo "| CHOOSE SIZE OF SHIP -> 1, 2, 3 or 4 | "
@@ -334,7 +391,8 @@ placeShips() {
         printBoard
 }
 
-readKeys() {
+#read keys from keyboard and do the actions
+function readKeysToPlaceShips() {
         while (( NUMBER_OF_SHIPS_1 + NUMBER_OF_SHIPS_2 + NUMBER_OF_SHIPS_3 + NUMBER_OF_SHIPS_4 != 10 ))   # Read a single key from user input
         do
                 PREVIOUS_X=${COORDINATES_X}
@@ -397,10 +455,201 @@ readKeys() {
         done
 }
 
-clear
+#generate random coordinates
+function generateCoordinates() {
+        ROW=$((RANDOM % 10))
+        COL=$((RANDOM % 10))
+        echo "$ROW $COL"
+}
 
-initializeBoard
+#check if a ship can be placed at a given coordinate (AI function)
+function canPlaceShip() {
+        local ROW=$1    #initialize passed variables
+        local COL=$2 
+        local LENGTH=$3    
+        local DIRECTION=$4
 
-printBoard
+        if [ " DIRECTION" == "horizontal" ]; 
+        then
+                end_COL=$((COL + LENGTH - 1))
 
-readKeys
+                if [[ $end_COL -ge 10 ]]; 
+                then
+                        return 1
+                fi
+
+                for (( i=COL; i<=end_COL; i++ )); 
+                do
+                        if [[ ${AI_BOARD[$ROW,$i]} -ne 0 ]]; 
+                        then
+                                return 1
+                        fi
+                done
+
+                else
+                        end_ROW=$((ROW + LENGTH - 1))
+
+                if [ $end_ROW -ge 10 ]; 
+                then
+                        return 1
+                fi
+
+                for (( i=ROW; i<=end_ROW; i++ )); 
+                do
+                        if [[ ${AI_BOARD[$i,$COL]} -ne 0 ]]; then
+                                return 1
+                        fi
+                done
+        fi
+
+        return 0
+}
+
+#place a ship at a given coordinate (AI function)
+function placeShip() {
+        local ROW=$1    #initialize passed variables
+        local COL=$2
+        local LENGTH=$3
+        local DIRECTION=$4
+
+        if [ " DIRECTION" == "horizontal" ]; 
+        then
+                end_COL=$((COL + LENGTH - 1))
+                for (( i=COL; i<=end_COL; i++ )); 
+                do
+                        AI_BOARD[$ROW,$i]=$LENGTH
+                done
+        else
+        end_ROW=$((ROW + LENGTH - 1))
+                for (( i=ROW; i<=end_ROW; i++ )); 
+                do
+                        AI_BOARD[$i,$COL]=$LENGTH
+                done
+        fi
+}
+
+#place ships on AI board
+function placeAiShips() {
+        SHIPS=(4 3 3 2 2 2 1 1 1 1)
+        for SHIP in ${SHIPS[@]}; #expand to all elements of SHIPS array
+        do
+                while true; 
+                do
+                        coords=$(generateCoordinates)
+                        ROW=${coords%% *} #remove everything after the first space in coords, to extract the row coordinate
+                        COL=${coords##* } #remove everything before the last space in the coords, to extract that column coordinate
+                        DIRECTION=$((RANDOM % 2))
+                        if [[  DIRECTION -eq 0 ]]; 
+                        then
+                                DIRECTION="horizontal"
+
+                        else
+                                DIRECTION="vertical"
+                        fi
+
+                        if canPlaceShip $ROW $COL $SHIP  DIRECTION; 
+                        then
+                                placeShip $ROW $COL $SHIP  DIRECTION
+                                break
+                        fi
+                done
+        done
+}
+
+function shootingCursor() {
+        clear
+        SHOOTING_BOARD[$PREVIOUS_Y,$PREVIOUS_X]=${EMPTY_FIELD}
+        SHOOTING_BOARD[$COORDINATES_Y,$COORDINATES_X]=${SELECT_SHIP}
+        printShootingBoard
+}
+
+function readKeysToShootShips() {
+        COORDINATES_X=0
+        COORDINATES_Y=0
+        while true
+        do
+                PREVIOUS_X=${COORDINATES_X}
+                PREVIOUS_Y=${COORDINATES_Y}
+                read -rsn1 key 
+                case "$key" in
+                        $'f')
+                               
+                                continue
+                        ;;
+
+                        $'w') 
+                                TMP=$((COORDINATES_Y-1))
+                                if [[ ${COORDINATES_Y} -gt 0 && ${SHOOTING_BOARD[$TMP,$COORDINATES_X]} == ${EMPTY_FIELD} ]];
+                                then
+                                        COORDINATES_Y=$(($COORDINATES_Y-1)) 
+                                        shootingCursor
+                                fi
+                                continue
+                        ;;
+
+                        $'s') 
+                                TMP=$((COORDINATES_Y+1))
+                                if [[ ${COORDINATES_Y} -lt 9 && ${SHOOTING_BOARD[$TMP,$COORDINATES_X]} == ${EMPTY_FIELD} ]];
+                                then
+                                        COORDINATES_Y=$(($COORDINATES_Y+1))
+                                        shootingCursor
+                                fi
+                                continue
+                        ;;
+
+                        $'d') 
+                                TMP=$((COORDINATES_X+1))
+                                if [[ ${COORDINATES_X} -lt 9 && ${SHOOTING_BOARD[$COORDINATES_Y,$TMP]} == ${EMPTY_FIELD} ]];
+                                then
+                                        COORDINATES_X=$(($COORDINATES_X+1))
+                                        shootingCursor
+                                fi
+                                continue
+                        ;;
+
+                        $'a') 
+                                TMP=$((COORDINATES_X-1))
+                                if [[ ${COORDINATES_X} -gt 0 && ${SHOOTING_BOARD[$COORDINATES_Y,$TMP]} == ${EMPTY_FIELD} ]];
+                                then
+                                        COORDINATES_X=$(($COORDINATES_X-1))
+                                        shootingCursor
+                                fi
+                                continue
+                        ;;
+
+                        $'e') 
+                                break
+                        ;;
+
+                        *) 
+                                echo "INVALID KEY"
+                        ;;
+                esac
+        done
+}
+
+#clear
+
+#initializeBoard
+
+#printBoard
+
+#readKeysToPlaceShips
+
+initializeAiBoard
+
+placeAiShips
+
+initializeShootingBoard
+
+printShootingBoard
+
+readKeysToShootShips
+
+# Print board
+#for (( i=0; i<10; i++ )); do
+   #for (( j=0; j<10; j++ )); do
+       # printf "%c " ${AI_BOARD[$i,$j]}
+    #done
+    #echo
+#done
