@@ -1,4 +1,4 @@
-###Battleships Game
+# Battleships Game
 <h2>Description</h2>
 The Battleships Game is a classic strategy game implemented in a command-line interface (CLI) environment. The game allows players to compete against the computer by strategically placing their ships on a grid and attempting to sink the opponent's ships. The game continues until one player runs out of ships.
 
