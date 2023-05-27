@@ -9,7 +9,7 @@ Ship placement: Players can strategically place their ships on the grid before t
 Hit and miss feedback: After each guess, the game provides feedback on whether the guess was a hit or a miss.
 Ship sinking: When a player successfully hits all the positions of an opponent's ship, that ship is considered sunk.
 End game condition: The game continues until either the player or the computer runs out of ships.
-<h2>Usage</h>
+<h2>Usage</h2>
 <p>To play the Battleships Game, follow these steps:</p>
 
 Run the battleships.sh script.
