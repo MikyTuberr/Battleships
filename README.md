@@ -22,7 +22,7 @@ Continue until one player runs out of ships.
 -p: Start the game.
 -h: Display help information.
 <h2>Author</h2>
-MikyTuberr / Piotr
+<p>MikyTuberr / Piotr</p>
 Email: pio1342@gmail.com
 
 <h2>Bug Reports</h2>
