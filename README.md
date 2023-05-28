@@ -29,4 +29,4 @@ Email: pio1342@gmail.com
 Please contact pio1342@gmail.com to report any bugs, errors, or typos.
 
 <h2>License</h2>
-This project is licensed under the MIT License. See the LICENSE file for more information.
+This project is licensed under the Apache License Version 2.0. See the LICENSE file for more information.
