@@ -770,7 +770,7 @@ function readKeysToShootShips() {
 while getopts "hap" option; do
         case "${option}" in
                 a):
-                        echo "AUTHOR: PIOTR LACHOWICZ, 193630, INFROMATYKA, GR. 7"
+                        echo "AUTHOR: PIOTR LACHOWICZ"
                 ;;
                 h):
                         echo "Battleships game"
