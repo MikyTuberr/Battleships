@@ -1,5 +1,5 @@
 #!/bin/bash 
-# Autor: Piotr Lachowicz 193630, Informatyka, gr. 7, maj 2023
+# Autor: Piotr Lachowicz, may 2023
 
 COUNTER=0
 EMPTY_FIELD="O"
