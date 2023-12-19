@@ -1,5 +1,16 @@
 #!/bin/bash 
-# Autor: Piotr Lachowicz, may 2023
+# Author           : Piotr Lachowicz / MikyTuberr
+# Created On       : 2023-05-17
+# Last Modified By : Piotr Lachowicz / MikyTuberr
+# Last Modified On : 2023-12-19
+# Version          : release 1.0.1
+#
+# Description      : Battleships Game in Bash
+#                   This project is a text-based implementation of the classic Battleships game in Bash. 
+#                   Dive into the strategic naval warfare, place your fleet, and engage in intense battles.
+#                   Future updates will bring additional features and enhancements.
+#
+# Licensed under Apache License 2.0
 
 COUNTER=0
 EMPTY_FIELD="O"
