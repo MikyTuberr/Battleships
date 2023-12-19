@@ -3,13 +3,15 @@
 The Battleships Game is a classic strategy game implemented in a command-line interface (CLI) environment. The game allows players to compete against the computer by strategically placing their ships on a grid and attempting to sink the opponent's ships. The game continues until one player runs out of ships.
 
 <h2>Features</h2>
-<p align="center"><img src="photo/bs.png" alt="game-overview"/></p>
 Interactive gameplay: Players can take turns placing their ships and guessing the positions of the opponent's ships.
 Grid-based interface: The game is played on a grid, allowing players to select specific coordinates for their moves.
 Ship placement: Players can strategically place their ships on the grid before the game begins.
 Hit and miss feedback: After each guess, the game provides feedback on whether the guess was a hit or a miss.
 Ship sinking: When a player successfully hits all the positions of an opponent's ship, that ship is considered sunk.
 End game condition: The game continues until either the player or the computer runs out of ships.
+<br><br>
+<p align="center"><img src="photo/bs.png" alt="game-overview"/></p>
+
 <h2>Usage</h2>
 <p>To play the Battleships Game, follow these steps:</p>
 
