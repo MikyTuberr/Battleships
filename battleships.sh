@@ -125,11 +125,11 @@ function printShootingBoard() {
 
 #cursor movement
 function cursor() {
-        clear
-        BOARD[$PREVIOUS_Y,$PREVIOUS_X]=${PREVIOUS_SYMBOL}
-        PREVIOUS_SYMBOL=${BOARD[$COORDINATES_Y,$COORDINATES_X]}
-        BOARD[$COORDINATES_Y,$COORDINATES_X]=${SELECT_SHIP}
-        printBoard
+    clear
+    BOARD[$PREVIOUS_Y,$PREVIOUS_X]=${PREVIOUS_SYMBOL}
+    PREVIOUS_SYMBOL=${BOARD[$COORDINATES_Y,$COORDINATES_X]}
+    BOARD[$COORDINATES_Y,$COORDINATES_X]=${SELECT_SHIP}
+    printBoard
 }
 
 #find the position of cursor after action 
@@ -169,266 +169,142 @@ function findPositionOfCursor() {
         printBoard     
 }
 
-#place the ships
+# choose the size of ship
+function chooseShipSize() {
+    echo "| CHOOSE SIZE OF SHIP -> 1, 2, 3 or 4 | "
+    while true; do
+        read -rsn1 key2
+        case "$key2" in
+            $'4')
+                placeShipOfSize 4 1
+                break
+                ;;
+            $'3')
+                placeShipOfSize 3 2
+                break
+                ;;
+            $'2')
+                placeShipOfSize 2 3
+                break
+                ;;
+            $'1')
+                placeShipOfSize 1 4
+                break
+                ;;
+            $'e')
+                break
+                ;;
+            *)
+                echo "INVALID KEY"
+                ;;
+        esac
+    done
+}
+
+# check if the size of ship is valid
+function placeShipOfSize() {
+    local size=$1
+    local maxCount=$2
+
+    local variableName="NUMBER_OF_SHIPS_$size"
+
+    if (( ${!variableName} < ${maxCount} )); then
+        SHIP_SIZE=$size
+        SHIP=$size
+        declare -g "$variableName=$(( ${!variableName} + 1 ))"
+        read -rsn2 -t 0.1
+        chooseShipDirection
+    else
+        echo "U CAN PLACE ONLY $maxCount SHIPS OF THIS KIND"          
+        chooseShipSize
+    fi
+}
+
+# choose direction of ship
+function chooseShipDirection() {
+    while true; do
+        echo "| CHOOSE DIRECTION OF SHIP -> W A S D | "
+        read -rsn1 DIRECTION
+        case "$DIRECTION" in
+            $'w' | $'a' | $'s' | $'d')
+                validateAndPlaceShip $DIRECTION
+                break
+                ;;
+            $'e')
+                break
+                ;;
+            *)
+                echo "INVALID KEY"
+                ;;
+        esac
+    done
+}
+
+# validate direction of ship 
+function validateAndPlaceShip() {
+    local direction=$1
+
+    if [[ $direction == 'w' && $((COORDINATES_Y - SHIP_SIZE + 1)) -ge 0 ]]; then
+        placeShipInDirection -1 0
+    elif [[ $direction == 'a' && $((COORDINATES_X - SHIP_SIZE + 1)) -ge 0 ]]; then
+        placeShipInDirection 0 -1
+    elif [[ $direction == 's' && $((COORDINATES_Y + SHIP_SIZE - 1)) -lt 10 ]]; then
+        placeShipInDirection 1 0
+    elif [[ $direction == 'd' && $((COORDINATES_X + SHIP_SIZE - 1)) -lt 10 ]]; then
+        placeShipInDirection 0 1
+    else
+        echo "CANNOT PLACE SHIP OUT OF THE BOARD"
+        chooseShipDirection
+    fi
+}
+
+# place and check if the fields are occupied
+function placeShipInDirection() {
+    local deltaY=$1
+    local deltaX=$2
+
+    SHIP_SIZE_COPY=$SHIP_SIZE
+    TMP_COORDINATES_Y=$COORDINATES_Y
+    TMP_COORDINATES_X=$COORDINATES_X
+
+    while [[ $SHIP_SIZE_COPY -ne 0 ]]; do
+        TMP_COORDINATES_Y=$((TMP_COORDINATES_Y + deltaY))
+        TMP_COORDINATES_X=$((TMP_COORDINATES_X + deltaX))
+        SHIP_SIZE_COPY=$((SHIP_SIZE_COPY - 1))
+
+        if [[ ${BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]} != ${EMPTY_FIELD} ]]; then
+            echo "CANNOT OVERLAP"
+            return
+        fi
+    done
+
+    TMP_COORDINATES_Y=$COORDINATES_Y
+    TMP_COORDINATES_X=$COORDINATES_X
+
+    while [[ $SHIP_SIZE -ne 0 ]]; do
+        BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]=${SHIP}
+        TMP_COORDINATES_Y=$((TMP_COORDINATES_Y + deltaY))
+        TMP_COORDINATES_X=$((TMP_COORDINATES_X + deltaX))
+        SHIP_SIZE=$((SHIP_SIZE - 1))
+    done
+
+    clear
+    findPositionOfCursor
+    printBoard
+}
+
+# start placing the ship
 function placeShips() {
-        read -rsn2 -t 0.1 # consume any remaining input
+    read -rsn2 -t 0.1
+    initializeControlVariables
 
-        echo "| CHOOSE SIZE OF SHIP -> 1, 2, 3 or 4 | "
-        while true 
-        do
-                read -rsn1 key2 #choosing the size of ship to place
-                case "$key2" in
-                                $'4')
-                                        if [[ ${NUMBER_OF_SHIPS_4} -ne 1 ]];
-                                        then 
-                                                SHIP_SIZE=4
-                                                SHIP="4"
-                                                NUMBER_OF_SHIPS_4=1
-                                                break;
-                                        else 
-                                                echo "U CAN PLACE ONLY 1 SHIP OF THIS KIND"
-                                        fi
-                                ;;
+    chooseShipSize
+}
 
-                                $'3') 
-                                        if [[ ${NUMBER_OF_SHIPS_3} -ne 2 ]];
-                                        then 
-                                                SHIP_SIZE=3
-                                                SHIP="3"
-                                                NUMBER_OF_SHIPS_3=$(($NUMBER_OF_SHIPS_3+1))
-                                                break;
-                                        else 
-                                                echo "U CAN PLACE ONLY 2 SHIPS OF THIS KIND"
-                                        fi
-                                ;;
-
-                                $'2') 
-                                        if [[ ${NUMBER_OF_SHIPS_2} -ne 3 ]];
-                                        then 
-                                                SHIP_SIZE=2
-                                                SHIP="2"
-                                                NUMBER_OF_SHIPS_2=$(($NUMBER_OF_SHIPS_2+1))
-                                                break;
-                                        else 
-                                                echo "U CAN PLACE ONLY 3 SHIPS OF THIS KIND"
-                                        fi
-                                ;;
-
-                                $'1') 
-                                        if [[ ${NUMBER_OF_SHIPS_1} -ne 4 ]];
-                                        then 
-                                                SHIP_SIZE=1
-                                                SHIP="1"
-                                                NUMBER_OF_SHIPS_1=$(($NUMBER_OF_SHIPS_1+1))
-                                                break;
-                                        else 
-                                                echo "U CAN PLACE ONLY 4 SHIPS OF THIS KIND"
-                                        fi
-                                ;;
-
-                                
-                                $'e') 
-                                        break
-                                ;;
-
-                                *) 
-                                        echo "INVALID KEY"
-                                ;;
-                esac
-        done    
-
-        read -rsn2 -t 0.1 # consume any remaining input
-        
-        CONTROLER=0
-        while true
-        do
-                        echo "| CHOOSE DIRECTION OF SHIP -> W A S D | "
-                        read -rsn1 DIRECTION 
-                                case "$DIRECTION" in                    #choosing the direction, to print rest of ship
-                                        $'w')   
-                                                if [[ $(($COORDINATES_Y-$SHIP_SIZE+1)) -gt -1 ]];
-                                                then
-                                                        SHIP_SIZE_COPY=$SHIP_SIZE
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-                                                        while [[ $SHIP_SIZE_COPY -ne 0 ]]
-                                                        do
-                                                                TMP_COORDINATES_Y=$(($TMP_COORDINATES_Y-1))
-                                                                SHIP_SIZE_COPY=$(($SHIP_SIZE_COPY-1))
-                                                                if [[ ${BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]} != ${EMPTY_FIELD} ]];
-                                                                then
-                                                                        echo "CANNOT OVERLAP"
-                                                                        CONTROLER=1
-                                                                fi
-                                                                
-                                                        done
-
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-
-                                                        if [[ $CONTROLER -eq 0 ]];
-                                                        then
-                                                                while [[ $SHIP_SIZE -ne 0 ]] 
-                                                                do
-                                                                        BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]=${SHIP}
-                                                                        TMP_COORDINATES_Y=$(($TMP_COORDINATES_Y-1))
-                                                                        SHIP_SIZE=$(($SHIP_SIZE-1))
-                        
-                                                                done
-                                                                CONTROLER=2
-                                                        fi
-
-                                                        if [[ $CONTROLER -eq 2 ]]; 
-                                                        then
-                                                                CONTROLER=0
-                                                                break 3
-                                                        fi
-                                                        CONTROLER=0
-                                                else 
-                                                        echo "CANNOT PLACE SHIP OUT OF THE BOARD"
-                                                fi
-                                        ;;
-                                        $'a')
-                                                if [[ $(($COORDINATES_X-$SHIP_SIZE+1)) -gt -1 ]];
-                                                then
-                                                        SHIP_SIZE_COPY=$SHIP_SIZE
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-                                                        while [[ $SHIP_SIZE_COPY -ne 0 ]]
-                                                        do
-                                                                TMP_COORDINATES_X=$(($TMP_COORDINATES_X-1))
-                                                                SHIP_SIZE_COPY=$(($SHIP_SIZE_COPY-1))
-                                                                if [[ ${BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]} != ${EMPTY_FIELD} ]];
-                                                                then
-                                                                        echo "CANNOT OVERLAP"
-                                                                        CONTROLER=1
-                                                                fi
-                                                                
-                                                        done
-
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-
-                                                        if [[ $CONTROLER -eq 0 ]];
-                                                        then
-                                                                while [[ $SHIP_SIZE -ne 0 ]] 
-                                                                do
-                                                                        BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]=${SHIP}
-                                                                        TMP_COORDINATES_X=$(($TMP_COORDINATES_X-1))
-                                                                        SHIP_SIZE=$(($SHIP_SIZE-1))
-                                                                done
-                                                                CONTROLER=2
-                                                        fi
-                                                        
-                                                        if [[ $CONTROLER -eq 2 ]]; 
-                                                        then
-                                                                CONTROLER=0
-                                                                break 3
-                                                        fi
-                                                        CONTROLER=0
-                                                else 
-                                                        echo "CANNOT PLACE SHIP OUT OF THE BOARD"
-                                                fi
-                                        ;;
-                                        $'s')
-                                                if [[ $(($COORDINATES_Y+$SHIP_SIZE-1)) -lt 10 ]];
-                                                then
-                                                        SHIP_SIZE_COPY=$SHIP_SIZE
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-                                                        while [[ $SHIP_SIZE_COPY -ne 0 ]]
-                                                        do
-                                                                TMP_COORDINATES_Y=$(($TMP_COORDINATES_Y+1))
-                                                                SHIP_SIZE_COPY=$(($SHIP_SIZE_COPY-1))
-                                                                if [[ ${BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]} != ${EMPTY_FIELD} ]];
-                                                                then
-                                                                        echo "CANNOT OVERLAP"
-                                                                        CONTROLER=1
-                                                                fi
-                                        
-                                                        done
-
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-
-                                                        if [[ $CONTROLER -eq 0 ]];
-                                                        then
-                                                                while [[ $SHIP_SIZE -ne 0 ]] 
-                                                                do
-                                                                        BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]=${SHIP}
-                                                                        TMP_COORDINATES_Y=$(($TMP_COORDINATES_Y+1))
-                                                                        SHIP_SIZE=$(($SHIP_SIZE-1))
-                                                                done
-                                                                CONTROLER=2
-                                                        fi
-
-                                                        if [[ $CONTROLER -eq 2 ]]; 
-                                                        then
-                                                                CONTROLER=0
-                                                                break 3
-                                                        fi
-                                                        CONTROLER=0
-                                                else 
-                                                        echo "CANNOT PLACE SHIP OUT OF THE BOARD"
-                                                fi
-                                        ;;
-                                        $'d')
-                                                if [[ $(($COORDINATES_X+$SHIP_SIZE-1)) -lt 10 ]];
-                                                then
-                                                        SHIP_SIZE_COPY=$SHIP_SIZE
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-                                                        while [[ $SHIP_SIZE_COPY -ne 0 ]]
-                                                        do
-                                                                TMP_COORDINATES_X=$(($TMP_COORDINATES_X+1))
-                                                                SHIP_SIZE_COPY=$(($SHIP_SIZE_COPY-1))
-                                                                if [[ ${BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]} != ${EMPTY_FIELD} ]];
-                                                                then
-                                                                        echo "CANNOT OVERLAP"
-                                                                        CONTROLER=1
-                                                                fi
-                                                                
-                                                        done
-
-                                                        TMP_COORDINATES_Y=$COORDINATES_Y
-                                                        TMP_COORDINATES_X=$COORDINATES_X
-                                                        
-                                                        if [[ $CONTROLER -eq 0 ]];
-                                                        then
-                                                                while [[ $SHIP_SIZE -ne 0 ]] 
-                                                                do
-                                                                        BOARD[$TMP_COORDINATES_Y,$TMP_COORDINATES_X]=${SHIP}
-                                                                        TMP_COORDINATES_X=$(($TMP_COORDINATES_X+1))
-                                                                        SHIP_SIZE=$(($SHIP_SIZE-1))
-                                                                done
-                                                                CONTROLER=2
-                                                        fi
-
-                                                        if [[ $CONTROLER -eq 2 ]]; 
-                                                        then
-                                                                CONTROLER=0
-                                                                break 3
-                                                        fi
-
-                                                        CONTROLER=0
-                                                else 
-                                                        echo "CANNOT PLACE SHIP OUT OF THE BOARD"
-                                                fi
-                                        ;;
-
-                                        $'e') 
-                                                break
-                                        ;;
-
-                                        *)
-                                                echo "INVALID KEY"
-                                        ;;
-                                esac
-        done
-        
-        findPositionOfCursor
-        clear 
-        printBoard
+# startup flags for placeShips
+function initializeControlVariables() {
+    CONTROLER=0
+    SHIP_SIZE_COPY=0
 }
 
 #read keys from keyboard and do the actions
@@ -501,6 +377,7 @@ function readKeysToPlaceShips() {
                 esac
         done
 }
+
 
 #generate random coordinates
 function generateCoordinates() {
